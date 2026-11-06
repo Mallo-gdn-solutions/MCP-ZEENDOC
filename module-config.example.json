@@ -1,40 +1,77 @@
 {
-  "armoire": {
-    "nom": "NOM_ARMOIRE",
-    "url_client": "https://www.zeendoc.com/SKdwc/zeendoc?P1=Client",
-    "n_client": "N_CLIENT",
-    "plateforme": "France"
+  "zeendoc": {
+    "urlClient": "NOM_ARMOIRE",
+    "host": "https://armoires.zeendoc.com"
   },
-  "connexion": {
-    "mode": "oauth",
-    "client_id": "A_RENSEIGNER",
-    "client_secret": "A_RENSEIGNER",
-    "compte_application": "A_RENSEIGNER"
-  },
+  "lienDocument": "https://armoires.zeendoc.com/NOM_ARMOIRE/Ihm/View/docs_view.php?InDoc_Search=true&id={resId}&Coll_Id={collId}",
   "classeurs": {
-    "COLL_ID": {
-      "nom": "Factures fournisseurs",
+    "fournisseurs": {
+      "collId": "coll_X",
       "index": {
-        "tiers": "Champ_Tiers",
-        "reference": "Champ_Reference",
-        "date": "Champ_Date",
-        "ttc": "Champ_TTC",
-        "echeance": "Champ_Echeance",
-        "statut": "Champ_Statut"
+        "tiers": "custom_t2",
+        "date": "custom_d4",
+        "ref": "custom_t3",
+        "ttc": "custom_f2",
+        "echeance": "custom_d1",
+        "mode": "custom_n2",
+        "statut": "custom_n7",
+        "type": "custom_n3",
+        "datePaiement": "custom_d2",
+        "refBancaire": "custom_t5"
+      },
+      "statutPayeId": 1,
+      "typesExclus": [13]
+    },
+    "clients": {
+      "collId": "coll_Y",
+      "index": {
+        "tiers": "custom_t2",
+        "date": "custom_d4",
+        "ref": "custom_t3",
+        "ttc": "custom_f2",
+        "echeance": "custom_d1",
+        "mode": "custom_n2",
+        "statut": "custom_n7",
+        "type": "custom_n3",
+        "datePaiement": "custom_d3",
+        "refBancaire": "custom_t14"
       }
+    },
+    "notesDeFrais": {
+      "collId": "coll_Z",
+      "index": {
+        "tiers": "custom_t2",
+        "date": "custom_d4",
+        "ref": "custom_t3",
+        "ttc": "custom_f2",
+        "statut": "custom_n7",
+        "typeCB": "custom_n10",
+        "typeFrais": "custom_n3",
+        "collaborateur": "custom_t10",
+        "datePaiement": "custom_d1",
+        "refBancaire": "custom_t5",
+        "commentaire": "custom_t30"
+      },
+      "statutPayeId": 3
     }
   },
+  "collaborateurs": {},
   "banque": {
-    "compte": "FR...",
-    "alias_fournisseurs": {},
-    "exclusions": []
+    "nom": "Nom de la banque",
+    "fournisseursFraisBancaires": []
   },
-  "usages": {
-    "rapprochement": {
-      "actif": true,
-      "ecritures": [
-        "PATCH /binders/{collId}/documents/{resId}/indexes"
-      ]
-    }
+  "exclureEcriture": [],
+  "exclusionsSupplementaires": {
+    "debits": [],
+    "credits": []
+  },
+  "periodeDebutParDefaut": "01/01/2026",
+  "paiementsGroupes": {
+    "joursOuvres": 5,
+    "sources": []
+  },
+  "ecriture": {
+    "_aide": "false = le module propose seulement, aucune écriture dans Zeendoc",
+    "active": true
   }
 }

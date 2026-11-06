@@ -2,9 +2,6 @@
 
 final class ConfigArmoire
 {
-    private const PLATEFORMES = ['France', 'Suisse', 'Santé'];
-    private const MODES = ['cookie', 'oauth'];
-
     private array $config;
     private string $chemin;
 
@@ -30,42 +27,21 @@ final class ConfigArmoire
 
     private function valider(): void
     {
-        $armoire = $this->section('armoire');
-        foreach (['nom', 'url_client', 'n_client', 'plateforme'] as $cle) {
-            if (empty($armoire[$cle])) {
-                throw new RuntimeException("Config invalide : armoire.$cle requis");
+        if (empty($this->get('zeendoc.urlClient'))) {
+            throw new RuntimeException("Config invalide : zeendoc.urlClient requis");
+        }
+        $host = (string) $this->get('zeendoc.host', '');
+        if ($host === '' || !filter_var($host, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException("Config invalide : zeendoc.host doit être une URL");
+        }
+        foreach (['fournisseurs', 'clients'] as $nom) {
+            if (empty($this->get("classeurs.$nom.collId"))) {
+                throw new RuntimeException("Config invalide : classeurs.$nom.collId requis");
+            }
+            if (!is_array($this->get("classeurs.$nom.index", []))) {
+                throw new RuntimeException("Config invalide : classeurs.$nom.index doit être un objet");
             }
         }
-        if (!in_array($armoire['plateforme'], self::PLATEFORMES, true)) {
-            throw new RuntimeException("Config invalide : plateforme inconnue ({$armoire['plateforme']})");
-        }
-        if (!filter_var($armoire['url_client'], FILTER_VALIDATE_URL)) {
-            throw new RuntimeException("Config invalide : armoire.url_client n'est pas une URL");
-        }
-        $connexion = $this->section('connexion');
-        $mode = $connexion['mode'] ?? 'cookie';
-        if (!in_array($mode, self::MODES, true)) {
-            throw new RuntimeException("Config invalide : connexion.mode doit être cookie ou oauth");
-        }
-        if ($mode === 'oauth') {
-            foreach (['client_id', 'client_secret', 'compte_application'] as $cle) {
-                if (empty($connexion[$cle])) {
-                    throw new RuntimeException("Config invalide : connexion.$cle requis en mode oauth");
-                }
-            }
-        }
-        if ($mode === 'cookie' && empty($connexion['cookie'])) {
-            throw new RuntimeException("Config invalide : connexion.cookie requis en mode cookie");
-        }
-        if (!is_array($this->section('classeurs'))) {
-            throw new RuntimeException("Config invalide : classeurs doit être un objet");
-        }
-    }
-
-    public function section(string $nom): array
-    {
-        $valeur = $this->config[$nom] ?? [];
-        return is_array($valeur) ? $valeur : [];
     }
 
     public function get(string $cle, $defaut = null)
@@ -80,14 +56,25 @@ final class ConfigArmoire
         return $valeur;
     }
 
-    public function armoire(): array
+    public function section(string $nom): array
     {
-        return $this->section('armoire');
+        $valeur = $this->config[$nom] ?? [];
+        return is_array($valeur) ? $valeur : [];
     }
 
-    public function connexion(): array
+    public function zeendocHost(): string
     {
-        return $this->section('connexion');
+        return (string) $this->get('zeendoc.host');
+    }
+
+    public function urlClient(): string
+    {
+        return (string) $this->get('zeendoc.urlClient');
+    }
+
+    public function lienDocument(): string
+    {
+        return (string) $this->get('lienDocument', '');
     }
 
     public function classeurs(): array
@@ -95,20 +82,47 @@ final class ConfigArmoire
         return $this->section('classeurs');
     }
 
+    public function classeur(string $nom): array
+    {
+        $classeur = $this->get("classeurs.$nom", []);
+        return is_array($classeur) ? $classeur : [];
+    }
+
     public function banque(): array
     {
         return $this->section('banque');
     }
 
-    public function exclusions(): array
+    public function collaborateurs(): array
     {
-        $exclusions = $this->get('banque.exclusions', []);
+        return $this->section('collaborateurs');
+    }
+
+    public function exclureEcriture(): array
+    {
+        $liste = $this->get('exclureEcriture', []);
+        return is_array($liste) ? $liste : [];
+    }
+
+    public function exclusionsSupplementaires(): array
+    {
+        $exclusions = $this->get('exclusionsSupplementaires', []);
         return is_array($exclusions) ? $exclusions : [];
     }
 
-    public function usages(): array
+    public function periodeDebutParDefaut(): string
     {
-        return $this->section('usages');
+        return (string) $this->get('periodeDebutParDefaut', '');
+    }
+
+    public function paiementsGroupes(): array
+    {
+        return $this->section('paiementsGroupes');
+    }
+
+    public function ecritureActive(): bool
+    {
+        return (bool) $this->get('ecriture.active', false);
     }
 
     public function chemin(): string

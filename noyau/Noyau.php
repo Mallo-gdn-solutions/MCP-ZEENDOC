@@ -9,6 +9,9 @@ spl_autoload_register(static function (string $classe): void {
 
 final class Noyau
 {
+    public const USAGE_RAPPROCHEMENT = 'rapprochement';
+    public const ROUTE_REGLEMENT = 'PATCH /binders/{collId}/documents/{resId}/indexes';
+
     private ConfigArmoire $config;
     private StockageLocal $stockage;
     private JournalEcritures $journal;
@@ -29,22 +32,21 @@ final class Noyau
         $this->client = $client;
     }
 
-    public static function depuisConfig(string $cheminConfig, ?string $dossierDonnees = null, ?callable $transport = null): self
-    {
+    public static function depuisConfig(
+        string $cheminConfig,
+        ?string $dossierDonnees = null,
+        ?callable $transport = null,
+        ?array $identifiants = null
+    ): self {
         $config = ConfigArmoire::charger($cheminConfig);
         $dossierDonnees = $dossierDonnees ?? dirname($cheminConfig);
         $stockage = new StockageLocal($dossierDonnees);
         $journal = new JournalEcritures($stockage);
         $registre = new RegistreUsages();
-        foreach ($config->usages() as $usage => $reglages) {
-            if (!is_array($reglages) || empty($reglages['actif'])) {
-                continue;
-            }
-            foreach ((array) ($reglages['ecritures'] ?? []) as $route) {
-                $registre->accorderEcriture((string) $usage, (string) $route);
-            }
+        if ($config->ecritureActive()) {
+            $registre->accorderEcriture(self::USAGE_RAPPROCHEMENT, self::ROUTE_REGLEMENT);
         }
-        $client = new ZeendocClient($config, $stockage, $journal, $registre, $transport);
+        $client = new ZeendocClient($config, $stockage, $journal, $registre, $transport, $identifiants);
         return new self($config, $stockage, $journal, $registre, $client);
     }
 

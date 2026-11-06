@@ -3,6 +3,7 @@ oauth-jetons.json
 dernier-releve.csv
 validations.json
 ecritures-journal.jsonl
+paiements-groupes.json
 
 # Caches et bancs de test
 cache-*
