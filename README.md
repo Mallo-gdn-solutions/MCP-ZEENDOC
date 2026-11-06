@@ -1,37 +1,26 @@
 # Plateforme Zeendoc GDN — étape 1 : noyau générique
 
-Noyau PHP réutilisable qui parle à l'API Zeendoc v4. Aucun réglage client dans le code :
-tout passe par la configuration de l'armoire (`module-config.json`, voir `module-config.example.json`).
+Le noyau (`noyau/`) est la partie générique, sans aucun réglage client en dur :
+lecture/contrôle de l'armoire, journal des écritures, HTTP, liste blanche des routes, outils communs.
+Tout ce qui est propre à l'armoire gdn_solutions vit dans `module-config.json`.
 
 ## Arborescence
 
-- `noyau/Noyau.php` — point d'entrée unique : `Noyau::depuisConfig($cheminConfig)` branche config, stockage, journal, registre et client.
-- `noyau/ZeendocClient.php` — client API v4 (`{host}/{urlClient}/api/v4`), liste blanche des routes, auth cookie (`/login`) ou OAuth 2.0 (`_Login_OAuth`, jetons dans `oauth-jetons.json`), écriture ouverte usage par usage.
-- `noyau/ConfigArmoire.php` — lecture/validation de `module-config.json` (schéma v0.3.0 : zeendoc, classeurs, banque, exclusions, ecriture).
-- `noyau/StockageLocal.php` — fichiers locaux sensibles (`oauth-jetons.json`, `dernier-releve.csv`, `validations.json`), exclus du git.
-- `noyau/JournalEcritures.php` — journal JSONL de chaque écriture Zeendoc (`ecritures-journal.jsonl`).
-- `noyau/ContratModule.php` — interface `ModuleMetier` + `RegistreUsages` (lecture seule par défaut).
-- `tests/run-tests.php` — tests du noyau avec transport simulé.
+- `noyau/noyau.php` — point d'entrée : charge le noyau et expose la liste blanche (`noyau_route_autorisee`).
+- `noyau/armoire.php` — `armoire_lire`, `armoire_a_remplir`, `armoire_verifier_classeur`, `armoire_url_client`, `armoire_host`, `armoire_classeur`.
+- `noyau/journal.php` — journal JSONL des écritures Zeendoc (`ecritures-journal.jsonl`, `NOYAU_JOURNAL`).
+- `noyau/http.php` — `noyau_http` : unique point de passage des appels sortants (curl).
+- `noyau/outils.php` — `rb_utf8`, `rb_norm`, `rb_date`, `rb_ajout`, `rb_jours`, `rb_cents`, `rb_eur`, `rb_compact`.
+- `noyau/*.avant-classes.php` — premier jet du noyau (classes), conservé pour référence.
 
-## Fichiers de référence v0.3.0 (inchangés)
+## Connecteur v0.3.0 (inchangé, fonctionne exactement comme avant)
 
-- `zeendoc-mcp.php` — connecteur MCP local v0.3.0 (stdio, Claude Desktop).
-- `rapprochement-web.php` — interface web locale du rapprochement.
-- `module-config.json` — configuration réelle de l'armoire gdn_solutions.
+`zeendoc-mcp.php`, `rapprochement-web.php`, `config.php`, `rapprochement.php`, `ecriture.php`,
+`justificatifs.php`, `lots.php`, `remboursements.php`, `sources-paiements.php`, `module-config.json`.
 
 Identifiants jamais en dur : variables d'environnement `ZEENDOC_HOST`, `ZEENDOC_URL_CLIENT`,
-`ZEENDOC_LOGIN`, `ZEENDOC_PASSWORD`, et OAuth `ZEENDOC_CLIENT_ID`, `ZEENDOC_CLIENT_SECRET`, `ZEENDOC_N_CLIENT`.
-
-Fichiers attendus à côté du connecteur v0.3.0 (non versionnés ici) : `config.php`, `rapprochement.php`,
-`ecriture.php`, `justificatifs.php`, `lots.php`, `remboursements.php`, `sources-paiements.php`.
-
-## Utilisation
-
-```php
-require __DIR__ . '/noyau/Noyau.php';
-$noyau = Noyau::depuisConfig(__DIR__ . '/module-config.json');
-$context = $noyau->zeendoc()->contexte();
-```
+`ZEENDOC_LOGIN`, `ZEENDOC_PASSWORD`, OAuth `ZEENDOC_CLIENT_ID` / `ZEENDOC_CLIENT_SECRET` / `ZEENDOC_N_CLIENT`,
+compte d'écriture `ZEENDOC_ECRITURE_LOGIN` / `ZEENDOC_ECRITURE_PASSWORD`.
 
 ## Tests
 
@@ -41,7 +30,5 @@ php tests/run-tests.php
 
 ## Sécurité
 
-Les secrets ne sont jamais dans le code ni dans git (voir `.gitignore`).
-Toute écriture dans Zeendoc exige un usage déclaré avec la route autorisée
-(`ecriture.active` dans `module-config.json` ouvre la route règlement au rapprochement),
-et est journalisée avec les valeurs avant/après.
+Secrets exclus du git (voir `.gitignore`). Toute écriture Zeendoc passe par le profil « ecriture »
+de la liste blanche, limitée aux classeurs du module, et est journalisée (avant/après).
