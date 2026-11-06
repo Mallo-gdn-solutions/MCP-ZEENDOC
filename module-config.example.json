@@ -1,0 +1,40 @@
+{
+  "armoire": {
+    "nom": "NOM_ARMOIRE",
+    "url_client": "https://www.zeendoc.com/SKdwc/zeendoc?P1=Client",
+    "n_client": "N_CLIENT",
+    "plateforme": "France"
+  },
+  "connexion": {
+    "mode": "oauth",
+    "client_id": "A_RENSEIGNER",
+    "client_secret": "A_RENSEIGNER",
+    "compte_application": "A_RENSEIGNER"
+  },
+  "classeurs": {
+    "COLL_ID": {
+      "nom": "Factures fournisseurs",
+      "index": {
+        "tiers": "Champ_Tiers",
+        "reference": "Champ_Reference",
+        "date": "Champ_Date",
+        "ttc": "Champ_TTC",
+        "echeance": "Champ_Echeance",
+        "statut": "Champ_Statut"
+      }
+    }
+  },
+  "banque": {
+    "compte": "FR...",
+    "alias_fournisseurs": {},
+    "exclusions": []
+  },
+  "usages": {
+    "rapprochement": {
+      "actif": true,
+      "ecritures": [
+        "PATCH /binders/{collId}/documents/{resId}/indexes"
+      ]
+    }
+  }
+}

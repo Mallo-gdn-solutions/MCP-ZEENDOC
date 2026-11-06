@@ -1,0 +1,37 @@
+{
+  "armoire": {
+    "nom": "gdn_solutions",
+    "url_client": "https://zeendoc.test/client",
+    "n_client": "N_TEST",
+    "plateforme": "France"
+  },
+  "connexion": {
+    "mode": "oauth",
+    "client_id": "id-test",
+    "client_secret": "secret-test",
+    "compte_application": "compte-test"
+  },
+  "classeurs": {
+    "27": {
+      "nom": "Bac à sable",
+      "index": {
+        "tiers": "Tiers",
+        "reference": "Ref",
+        "ttc": "TTC"
+      }
+    }
+  },
+  "banque": {
+    "compte": "FR7630001000000000000000000",
+    "alias_fournisseurs": {},
+    "exclusions": ["PRELEVEMENT SEPA INTERNE"]
+  },
+  "usages": {
+    "rapprochement": {
+      "actif": true,
+      "ecritures": [
+        "PATCH /binders/{collId}/documents/{resId}/indexes"
+      ]
+    }
+  }
+}
