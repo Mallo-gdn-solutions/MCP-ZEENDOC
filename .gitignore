@@ -1,0 +1,28 @@
+# Fichiers sensibles — jamais dans Git
+oauth-jetons.json
+dernier-releve.csv
+validations.json
+ecritures-journal.jsonl
+
+# Caches et bancs de test
+cache-*
+banc-resultats/
+
+# Tout fichier contenant des identifiants, secrets ou credentials
+*.env
+.env*
+*credentials*
+*secrets*
+*identifiants*
+*client_secret*
+*mot-de-passe*
+*password*
+*token*.json
+*jeton*
+*.key
+*.pem
+*.p12
+id_rsa*
+
+# Répertoire runtime du sandbox
+.vibe/
