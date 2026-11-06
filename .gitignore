@@ -11,7 +11,7 @@ banc-resultats/
 # Tout fichier contenant des identifiants, secrets ou credentials
 *.env
 .env*
-*credentials*
+*cred*
 *secrets*
 *identifiants*
 *client_secret*
