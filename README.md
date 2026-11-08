@@ -1,4 +1,6 @@
-# Plateforme Zeendoc GDN — étape 1 : noyau générique
+# MCP-ZEENDOC
+---
+
 
 Le noyau (`noyau/`) est la partie générique, sans aucun réglage client en dur :
 lecture/contrôle de l'armoire, journal des écritures, HTTP, liste blanche des routes, outils communs.
