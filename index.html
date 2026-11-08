@@ -33,7 +33,6 @@
   .btn-p:hover{background:var(--bleu2)}
   .btn-s{background:#e6ebf2;color:var(--bleu)}
   .btn-ok{background:var(--vert);color:#fff}
-  .btn-danger{background:var(--rouge);color:#fff}
   .actions{display:flex;justify-content:space-between;margin-top:26px}
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   th,td{padding:9px 10px;border-bottom:1px solid var(--bord);text-align:left}
@@ -53,7 +52,6 @@
   .usage:last-child{border-bottom:none}
   .usage small{color:#7a8698;display:block;margin-top:2px}
   .warning{color:var(--rouge);font-size:12.5px;margin-top:10px}
-  .nav-btns{display:flex;gap:8px;margin-top:8px;padding:0 16px}
 </style>
 </head>
 <body>
@@ -67,7 +65,6 @@
 </div>
 <script>
 "use strict";
-// ====== Données fictives (simulation du retour /context Zeendoc) ======
 var STEPS=["Armoire","Connexion","Détection","Mapping","Usages","Droits","Test","Mise en service"];
 var state={
   step:0,
@@ -91,13 +88,12 @@ var state={
   droits:{ecriture:false,reglement:false,exportCompta:false},
   test:null,configOk:false
 };
-// ====== Rendu ======
 var nav=document.getElementById("nav"),main=document.getElementById("main");
 function render(){
   var h="";
   STEPS.forEach(function(s,i){
     var cls="step"+(i===state.step?" active":"")+(i<state.step?" done":"");
-    var num=i<state.step?"✓":(i+1);
+    var num=i<state.step?"\u2713":(i+1);
     h+='<div class="'+cls+'" onclick="go('+i+')"><span class="num">'+num+"</span>"+s+"</div>";
   });
   nav.innerHTML=h;
@@ -107,11 +103,10 @@ function render(){
 function go(i){ if(i<=state.step){state.step=i;render();} }
 function next(){ state.step=Math.min(state.step+1,STEPS.length-1);render(); }
 function prev(){ state.step=Math.max(state.step-1,0);render(); }
-function actions(extra){
-  return '<div class="actions"><button class="btn-s" onclick="prev()">← Retour</button><span>'+(extra||"")+'<button class="btn-p" onclick="next()">Continuer →</button></span></div>';
+function actions(){
+  return '<div class="actions"><button class="btn-s" onclick="prev()">\u2190 Retour</button><span><button class="btn-p" onclick="next()">Continuer \u2192</button></span></div>';
 }
 var VIEWS={};
-// --- Étape 1 : Armoire
 VIEWS[0]=function(){
   var a=state.armoire;
   return "<h2>1. Armoire</h2><p class='sous'>Identifiez l'armoire client à mettre en service.</p>"
@@ -119,25 +114,23 @@ VIEWS[0]=function(){
   +'<div><label>Url_Client</label><input value="'+a.url+'" oninput="state.armoire.url=this.value"></div></div>'
   +'<div class="row"><div><label>N_Client</label><input value="'+a.nclient+'" oninput="state.armoire.nclient=this.value"></div>'
   +'<div><label>Plateforme</label><select onchange="state.armoire.plateforme=this.value"><option'+(a.plateforme==="France"?" selected":"")+'>France</option><option'+(a.plateforme==="Suisse"?" selected":"")+'>Suisse</option><option'+(a.plateforme==="Santé"?" selected":"")+'>Santé</option></select></div></div></div>'
-  +'<div class="msg-info">Dans cette démo, l'armoire de test <b>gdn_solutions (coll_27)</b> est préremplie. Aucun appel réel n'est effectué.</div>'
+  +'<div class="msg-info">Dans cette démo, l\'armoire de test <b>gdn_solutions (coll_27)</b> est préremplie. Aucun appel réel n\'est effectué.</div>'
   +actions();
 };
-// --- Étape 2 : Connexion
 VIEWS[1]=function(){
   return "<h2>2. Connexion</h2><p class='sous'>Identifiants OAuth 2.0 fournis par Zeendoc (jamais affichés après saisie).</p>"
   +'<div class="card">'
   +'<label>client_id</label><input placeholder="ex. 3f8a..." oninput="state.conn.client_id=this.value">'
   +'<label>client_secret</label><input type="password" placeholder="••••••••" oninput="state.conn.client_secret=this.value">'
-  +'<label>Compte d'application</label><input placeholder="compte de service dédié" oninput="state.conn.compte=this.value">'
+  +'<label>Compte d\'application</label><input placeholder="compte de service dédié" oninput="state.conn.compte=this.value">'
   +'<div style="margin-top:16px"><button class="btn-p" onclick="testConn()">Tester la connexion</button></div>'
-  +(state.connOk?'<div class="msg-ok" style="margin-top:14px">✓ Connexion réussie sur zeendoc.com (simulation). Jeton d'accès d'1 heure obtenu.</div>':'<div class="warning">La démo accepte n'importe quels identifiants (simulation).</div>')
+  +(state.connOk?'<div class="msg-ok" style="margin-top:14px">\u2713 Connexion réussie sur zeendoc.com (simulation). Jeton d\'accès d\'1 heure obtenu.</div>':'<div class="warning">La démo accepte n\'importe quels identifiants (simulation).</div>')
   +"</div>"
   +actions();
 };
 function testConn(){ state.connOk=true;render();next(); }
-// --- Étape 3 : Détection
 VIEWS[2]=function(){
-  var h="<h2>3. Détection</h2><p class='sous'>Lecture automatique des classeurs via <code>/context</code>.</p>";
+  var h="<h2>3. Détection</h2><p class='sous'>Lecture automatique des classeurs via /context.</p>";
   state.classeurs.forEach(function(c){
     h+='<div class="card"><b>'+c.nom+'</b> <span class="pill p-gris">coll_'+c.id+"</span><table><tr><th>Index détecté</th></tr>"
     +c.indexes.map(function(i){return "<tr><td>"+i.n+"</td></tr>";}).join("")+"</table></div>";
@@ -145,13 +138,12 @@ VIEWS[2]=function(){
   h+='<div class="msg-info">4 classeurs et '+state.classeurs.reduce(function(n,c){return n+c.indexes.length;},0)+' index détectés (données fictives).</div>';
   return h+actions();
 };
-// --- Étape 4 : Mapping
 VIEWS[3]=function(){
-  var h="<h2>4. Mapping des index</h2><p class='sous'>L'IA propose un rôle pour chaque index ; le technicien valide ou corrige. ⚠ = à confirmer.</p>";
+  var h="<h2>4. Mapping des index</h2><p class='sous'>L IA propose un rôle pour chaque index ; le technicien valide ou corrige.</p>";
   state.classeurs.forEach(function(c,ci){
     h+='<div class="card"><b>'+c.nom+"</b><table><tr><th>Index</th><th>Rôle proposé (IA)</th><th>Rôle retenu</th></tr>";
     c.indexes.forEach(function(ix,ii){
-      var warn=(!ix.ok&&ix.role!==ix.ia)?" ⚠":"";
+      var warn=(!ix.ok&&ix.role!==ix.ia)?" \u26A0":"";
       var opts=state.ROLES.map(function(r){return '<option value="'+r+'"'+(ix.role===r?" selected":"")+">"+(r||"— aucun —")+"</option>";}).join("");
       h+="<tr><td>"+ix.n+warn+"</td><td>"+(ix.ia||"—")+"</td><td><select onchange='state.classeurs["+ci+"].indexes["+ii+"].role=this.value'>"+opts+"</select></td></tr>";
     });
@@ -159,37 +151,34 @@ VIEWS[3]=function(){
   });
   return h+actions();
 };
-// --- Étape 5 : Usages
 VIEWS[4]=function(){
-  var h="<h2>5. Usages</h2><p class='sous'>Activez les modules du catalogue et réglez-les usage par usage.</p><div class='card'>";
+  var h="<h2>5. Usages</h2><p class='sous'>Activez les modules du catalogue, usage par usage.</p><div class='card'>";
   state.usages.forEach(function(u,ui){
     h+='<div class="usage"><div><input type="checkbox" style="width:auto" '+(u.actif?"checked":"")+' onchange="state.usages['+ui+'].actif=this.checked"> <b>'+u.nom+"</b><small>"+u.desc+"</small><small>Écrit dans Zeendoc : "+u.ecrit+"</small></div>"
     +'<span class="pill '+(u.actif?"p-vert":"p-gris")+'">'+(u.actif?"Actif":"Inactif")+"</span></div>";
   });
   return h+"</div>"+actions();
 };
-// --- Étape 6 : Droits
 VIEWS[5]=function(){
   var d=state.droits;
-  return "<h2>6. Droits</h2><p class='sous'>Lecture seule par défaut. Chaque écriture s'active route par route.</p>"
+  return "<h2>6. Droits</h2><p class='sous'>Lecture seule par défaut. Chaque écriture s active route par route.</p>"
   +'<div class="card">'
   +'<div class="check"><input type="checkbox" checked disabled> Lecture (recherche, consultation, /context) — toujours actif</div>'
   +'<div class="check"><input type="checkbox" '+(d.ecriture?"checked":"")+' onchange="state.droits.ecriture=this.checked"> Autoriser les écritures dans Zeendoc</div>'
   +'<div class="check"><input type="checkbox" '+(d.reglement?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.reglement=this.checked"> Écriture des règlements (PATCH indexes)</div>'
-  +'<div class="check"><input type="checkbox" '+(d.exportCompta?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.exportCompta=this.checked"> Statut d'export comptable + listes de valeurs</div>'
-  +'<div class="warning">⚠ Toute écriture sera journalisée : qui, quand, document, valeur avant/après.</div></div>'
+  +'<div class="check"><input type="checkbox" '+(d.exportCompta?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.exportCompta=this.checked"> Statut d\'export comptable + listes de valeurs</div>'
+  +'<div class="warning">\u26A0 Toute écriture sera journalisée : qui, quand, document, valeur avant/après.</div></div>'
   +actions();
 };
-// --- Étape 7 : Test à blanc
 VIEWS[6]=function(){
   var h="<h2>7. Test à blanc</h2><p class='sous'>Exécution sur un mois passé, sans aucune écriture réelle.</p>";
-  if(state.test==="run"){ h+='<div class="card"><span class="spinner"></span>Exécution des usages actifs sur le mois d'octobre 2026…</div>'; }
+  if(state.test==="run"){ h+='<div class="card"><span class="spinner"></span>Exécution des usages actifs sur le mois d\'octobre 2026…</div>'; }
   else if(state.test){
     h+=state.test.map(function(r){return '<div class="card"><b>'+r.nom+"</b><table><tr><th>Résultat</th><th>Valeur</th></tr>"
       +"<tr><td>Documents analysés</td><td>"+r.docs+"</td></tr><tr><td>"+r.label+"</td><td>"+r.val+"</td></tr></table></div>";}).join("");
-    h+='<div class="msg-ok">✓ Test à blanc terminé. Rien n'a été écrit dans Zeendoc.</div>';
+    h+='<div class="msg-ok">\u2713 Test à blanc terminé. Rien n\'a été écrit dans Zeendoc.</div>';
   } else {
-    h+='<div class="card">Cliquez sur « Lancer le test » pour exécuter chaque usage actif à blanc sur un mois passé. <div class="warning">⚠ Résultats simulés (données fictives).</div><div style="margin-top:14px"><button class="btn-p" onclick="runTest()">Lancer le test</button></div></div>';
+    h+='<div class="card">Cliquez sur le bouton pour exécuter chaque usage actif à blanc sur un mois passé. <div class="warning">\u26A0 Résultats simulés (données fictives).</div><div style="margin-top:14px"><button class="btn-p" onclick="runTest()">Lancer le test</button></div></div>';
   }
   return h+actions();
 };
@@ -199,21 +188,25 @@ function runTest(){ state.test="run";render();setTimeout(function(){
   render();
 },1400);
 }
-// --- Étape 8 : Mise en service
 VIEWS[7]=function(){
   var cfg={
-    armoire:state.armoire,usages:state.usages.filter(function(u){return u.actif;}).map(function(u){return u.id;}),
-    droits:state.droits,mapping:state.classeurs.map(function(c){return {classeur:c.nom,indexes:c.indexes.filter(function(i){return i.role;}).map(function(i){return {index:i.n,role:i.role};});};})
+    armoire:state.armoire,
+    usages:state.usages.filter(function(u){return u.actif;}).map(function(u){return u.id;}),
+    droits:state.droits,
+    mapping:state.classeurs.map(function(c){
+      return {classeur:c.nom,indexes:c.indexes.filter(function(i){return i.role;}).map(function(i){return {index:i.n,role:i.role};})};
+    })
   };
   var h="<h2>8. Mise en service</h2><p class='sous'>Vérifiez le récapitulatif, puis générez la configuration.</p>"
   +'<div class="card"><b>Armoire :</b> '+state.armoire.client+" (N°"+state.armoire.nclient+", "+state.armoire.plateforme+")<br>"
   +"<b>Usages actifs :</b> "+state.usages.filter(function(u){return u.actif;}).map(function(u){return u.nom;}).join(", ")
   +"<br><b>Droits :</b> lecture seule"+(state.droits.ecriture?" + écritures activées":"")+"</div>"
-  +(state.configOk?'<div class="msg-ok">✓ Configuration générée. En production : création du kit d'installation ou publication sur l'hébergement.</div>':'<button class="btn-ok" onclick="genConfig()">Générer la configuration</button>')
-  +(state.configOk?'<h3 style="margin:18px 0 8px;color:var(--bleu)">module-config.json (extrait)</h3><pre>'+JSON.stringify(cfg,null,2)+"</pre>":"");
-  return h+'<div class="actions"><button class="btn-s" onclick="prev()">← Retour</button><button class="btn-p" onclick="alert('Démo terminée !\n\nProchaine étape réelle : brancher le noyau PHP sur l\'API Zeendoc et héberger sur un serveur français (OVH/Scaleway). Vercel ne sert ici qu\'à tester l\'interface.')">Terminer la démo</button></div>';
+  +(state.configOk?'<div class="msg-ok">\u2713 Configuration générée. En production : création du kit d\'installation ou publication sur l\'hébergement.</div>':'<button class="btn-ok" onclick="genConfig()">Générer la configuration</button>')
+  +(state.configOk?'<h3 style="margin:18px 0 8px;color:#0f3d6e">module-config.json (extrait)</h3><pre>'+JSON.stringify(cfg,null,2)+"</pre>":"");
+  return h+'<div class="actions"><button class="btn-s" onclick="prev()">\u2190 Retour</button><button class="btn-p" onclick="finDemo()">Terminer la démo</button></div>';
 };
 function genConfig(){ state.configOk=true;render(); }
+function finDemo(){ alert("Démo terminée !\n\nProchaine étape réelle : brancher le noyau PHP sur l API Zeendoc et héberger sur un serveur français (OVH / Scaleway). Vercel ne sert ici qu à tester l interface."); }
 render();
 </script>
 </body>
