@@ -202,7 +202,7 @@ $r = rb_rapprocher($factures, $ops, [
     'classes' => [],
 ]);
 
-$sortie = [
+$rapport = [
     'banc' => 'rapprochement',
     'cote' => $options['cote'],
     'periode' => ['du' => $du, 'au' => $au],
@@ -215,7 +215,7 @@ $dossier = dirname($sortie);
 if (!is_dir($dossier)) {
     mkdir($dossier, 0700, true);
 }
-file_put_contents($sortie, json_encode($sortie, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n", LOCK_EX);
+file_put_contents($sortie, json_encode($rapport, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n", LOCK_EX);
 
 $synthese = $r['synthese'] ?? [];
 echo "Banc écrit : $sortie\n";
