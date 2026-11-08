@@ -1,26 +1,26 @@
 # Manage GDN — connexion API Zeendoc reelle
 
-## Variables d'environnement a definir dans Vercel
+Base API (Swagger Zeendoc REST API Guide 2.1) :
+https://armoires.zeendoc.com/gdn_solutions/ws/rest
 
-(Settings > Environment Variables, puis Redeploy)
+Authentification : POST /login { login, password } -> cookie de session (~38880 s).
+Le cookie est gere cote serveur (proxy /api/zeendoc), le navigateur ne voit jamais les identifiants.
 
-| Variable | Contenu | Exemple |
+## Variables d'environnement a definir dans Vercel (Settings > Environment Variables > Redeploy)
+
+| Variable | Contenu | Valeur pour l armoire de test |
 |---|---|---|
-| ZEENDOC_TOKEN_URL | URL d'obtention du jeton OAuth (doc technique Zeendoc) | a confirmer dans la doc du 02/11/2026 |
-| ZEENDOC_API_BASE | Base de l'API v4 | a confirmer dans la doc |
-| ZEENDOC_CLIENT_ID | client_id fourni par Zeendoc | ... |
-| ZEENDOC_CLIENT_SECRET | client_secret fourni par Zeendoc | ... |
-| ZEENDOC_N_CLIENT | N_Client de l'armoire gdn_solutions | 27 |
+| ZEENDOC_API_BASE | Base de l API REST | https://armoires.zeendoc.com/gdn_solutions/ws/rest |
+| ZEENDOC_LOGIN | Compte d application Zeendoc (login) | a renseigner |
+| ZEENDOC_PASSWORD | Mot de passe du compte d application | a renseigner |
 
 ## Endpoints du proxy
 
-- GET /api/zeendoc?action=test : obtient un jeton OAuth et confirme la connexion
-- GET /api/zeendoc?action=context : appelle /context (classeurs, index, droits)
+- GET /api/zeendoc?action=test : POST /login et confirme l ouverture de session
+- GET /api/zeendoc?action=context : GET /context (classeurs, index, droits, configsets)
 
 ## Remarques
 
-- Les secrets ne sortent jamais du serveur : le navigateur ne parle qu'au proxy.
-- Les parametres exacts de la demande de jeton (nom des champs, scope) doivent etre
-  confirmes avec la documentation technique Zeendoc v4 du 02/11/2026.
-- Vercel heberge hors UE : a n'utiliser que sur l'armoire de test gdn_solutions,
-  jamais sur des donnees client reelles.
+- Le cookie expire : le proxy se reconnecte automatiquement si besoin.
+- Liste blanche respectee cote proxy : seuls /login et /context sont exposes pour l instant.
+- Vercel heberge hors UE : armoire de test gdn_solutions uniquement, jamais de donnees client reelles.

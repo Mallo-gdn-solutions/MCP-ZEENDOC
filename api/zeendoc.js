@@ -1,50 +1,53 @@
-// Proxy API Zeendoc pour le Manage GDN (bac a sable).
-// Toutes les valeurs sensibles sont dans les variables d'environnement Vercel.
-// Endpoints exacts a confirmer avec la documentation technique Zeendoc v4 (02/11/2026).
+// Proxy API Zeendoc pour le Manage GDN (armoire de test gdn_solutions).
+// Base : POST /login (login, password) -> cookie de session (~38880 s), puis Cookie sur chaque appel.
+// Doc : Zeendoc REST API Guide 2.1 (Swagger OAS 3.0).
 
-let cached = { token: null, exp: 0 };
+let cached = { cookie: null, exp: 0 };
 
-async function getToken() {
-  if (cached.token && Date.now() < cached.exp - 60000) return cached.token;
-  const url = process.env.ZEENDOC_TOKEN_URL;
-  if (!url) throw new Error("ZEENDOC_TOKEN_URL non configuree dans les variables d'environnement");
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: process.env.ZEENDOC_CLIENT_ID || "",
-    client_secret: process.env.ZEENDOC_CLIENT_SECRET || ""
-  });
-  if (process.env.ZEENDOC_N_CLIENT) body.set("N_Client", process.env.ZEENDOC_N_CLIENT);
-  const r = await fetch(url, {
+function base() {
+  const b = process.env.ZEENDOC_API_BASE || "https://armoires.zeendoc.com/gdn_solutions/ws/rest";
+  return b.replace(/\/+$/, "");
+}
+
+async function login() {
+  if (cached.cookie && Date.now() < cached.exp) return cached.cookie;
+  const loginVal = process.env.ZEENDOC_LOGIN;
+  const passVal = process.env.ZEENDOC_PASSWORD;
+  if (!loginVal || !passVal) throw new Error("ZEENDOC_LOGIN / ZEENDOC_PASSWORD non configures dans les variables d'environnement Vercel");
+  const r = await fetch(base() + "/login", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString()
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ login: loginVal, password: passVal })
   });
-  if (!r.ok) throw new Error("Demande de jeton refusée (HTTP " + r.status + ")");
-  const j = await r.json();
-  if (!j.access_token) throw new Error("Reponse sans access_token");
-  cached.token = j.access_token;
-  cached.exp = Date.now() + (j.expires_in || 3600) * 1000;
-  return cached.token;
+  if (!r.ok) throw new Error("Login refuse (HTTP " + r.status + ")");
+  let cookie = r.headers.get("set-cookie") || r.headers.get("Set-Cookie") || "";
+  // On garde uniquement paires nom=valeur (le set-cookie peut contenir plusieurs cookies separes par des virgules)
+  cookie = cookie.split(/,(?=[^;]+=)/).map(function (c) { return c.split(";")[0]; }).join("; ");
+  if (!cookie) throw new Error("Login OK mais aucun cookie recu");
+  const m = /ZeenDoc=/.test(cookie) ? cookie : null;
+  cached.cookie = m || cookie;
+  cached.exp = Date.now() + 10 * 3600 * 1000; // ~10 h, conservateur vs 38880 s
+  return cached.cookie;
 }
 
 async function apiGet(path) {
-  const base = process.env.ZEENDOC_API_BASE;
-  if (!base) throw new Error("ZEENDOC_API_BASE non configuree");
-  const token = await getToken();
-  const r = await fetch(base + path, { headers: { Authorization: "Bearer " + token } });
+  const cookie = await login();
+  const r = await fetch(base() + path, { headers: { Cookie: cookie } });
   const text = await r.text();
-  return { ok: r.ok, status: r.status, body: text.slice(0, 6000) };
+  let body = text;
+  try { body = JSON.parse(text); } catch (e) { /* texte brut */ }
+  return { ok: r.ok, status: r.status, body: body };
 }
 
 export default async function handler(req, res) {
   try {
     const action = (req.query && req.query.action) || "test";
     if (action === "test") {
-      const token = await getToken();
-      return res.status(200).json({ ok: true, message: "Jeton obtenu (expiration ~1h)", tokenPreview: token.slice(0, 6) + "..." });
+      const cookie = await login();
+      return res.status(200).json({ ok: true, message: "Connexion reussie, session ouverte (~10 h)", cookiePreview: cookie.slice(0, 16) + "..." });
     }
     if (action === "context") {
-      const out = await apiGet("/context");
+      const out = await apiGet("/context?getConfigSets=true");
       return res.status(out.ok ? 200 : 502).json(out);
     }
     return res.status(400).json({ ok: false, message: "action inconnue: " + action });
