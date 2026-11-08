@@ -124,11 +124,11 @@ VIEWS[1]=function(){
   if(state.connRun){ msg='<div class="msg-info"><span class="spinner"></span>Test de la connexion réelle en cours…</div>'; }
   else if(state.connOk&&state.live){ msg='<div class="msg-ok">\u2713 Connexion réelle réussie : '+state.connMsg+"</div>"; }
   else if(state.connOk){ msg='<div class="msg-info">Mode simulation activé : '+state.connMsg+"</div>"; }
-  return "<h2>2. Connexion</h2><p class='sous'>Test de la connexion OAuth 2.0 à l armoire (secrets gérés côté serveur).</p>"
+  return "<h2>2. Connexion</h2><p class='sous'>Test de la connexion à l armoire via POST /login + cookie de session (secrets gérés côté serveur).</p>"
   +'<div class="card">'
   +'<div style="font-size:13.5px;line-height:1.7">Le proxy <code>/api/zeendoc</code> utilise les variables d\'environnement Vercel :<br>'
-  +"<code>ZEENDOC_TOKEN_URL</code>, <code>ZEENDOC_API_BASE</code>, <code>ZEENDOC_CLIENT_ID</code>,<br>"
-  +"<code>ZEENDOC_CLIENT_SECRET</code>, <code>ZEENDOC_N_CLIENT</code></div>"
+  +"<code>ZEENDOC_API_BASE</code>, <code>ZEENDOC_LOGIN</code>, <code>ZEENDOC_PASSWORD</code><br>"
+  +"(compte d application de l armoire de test)</div>"
   +'<div style="margin-top:16px"><button class="btn-p" onclick="testConn()">Tester la connexion</button></div>'
   +msg
   +'<div class="warning">Si les variables ne sont pas encore configurées, la démo bascule automatiquement en simulation.</div>'
