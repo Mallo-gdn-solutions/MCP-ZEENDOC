@@ -57,7 +57,7 @@
 <body>
 <header>
   <h1>Manage GDN — Assistant de mise en service</h1>
-  <span class="badge">Bac à sable · données fictives · démo</span>
+  <span class="badge" id="mode-badge">Bac à sable · données fictives · démo</span>
 </header>
 <div class="layout">
   <nav id="nav"></nav>
@@ -69,7 +69,8 @@ var STEPS=["Armoire","Connexion","Détection","Mapping","Usages","Droits","Test"
 var state={
   step:0,
   armoire:{client:"GDN Solutions",url:"zeendoc.com",nclient:"27",plateforme:"France"},
-  conn:{client_id:"",client_secret:"",compte:""},connOk:false,
+  conn:{client_id:"",client_secret:"",compte:""},connOk:false,connRun:false,connMsg:"",
+  live:false,ctxData:null,ctxRun:false,
   classeurs:[
     {id:10,nom:"Factures fournisseurs",indexes:[{n:"Fournisseur",role:"tiers",ia:"tiers",ok:true},{n:"Date facture",role:"date",ia:"date",ok:true},{n:"N° facture",role:"reference",ia:"reference",ok:true},{n:"Montant TTC",role:"ttc",ia:"ttc",ok:true},{n:"Date échéance",role:"echeance",ia:"echeance",ok:true},{n:"IBAN",role:"iban",ia:"iban",ok:true},{n:"Statut",role:"statut",ia:"statut",ok:true}]},
     {id:11,nom:"Factures clients",indexes:[{n:"Client",role:"tiers",ia:"tiers",ok:true},{n:"Date facture",role:"date",ia:"date",ok:true},{n:"Montant TTC",role:"ttc",ia:"ttc",ok:true},{n:"Date échéance",role:"echeance",ia:"echeance",ok:true}]},
@@ -83,7 +84,7 @@ var state={
     {id:"pieces",nom:"Pièces manquantes",desc:"Liste les débits sans facture, prépare la demande fournisseur",ecrit:"Non",actif:false},
     {id:"echeancier",nom:"Échéancier",desc:"Factures échues et à venir à 30/60/90 jours",ecrit:"Non",actif:true},
     {id:"sante",nom:"Bilan de santé de l'armoire",desc:"Index vides, doublons, validations bloquées",ecrit:"Non",actif:false},
-    {id:"relances",nom:"Relance des validations",desc:"Message au valideur d'une facture bloquée depuis X jours",ecrit:"Non",actif:false}
+    {id:"relances",nom:"Relance des validations",desc:"Message au valideur d une facture bloquée depuis X jours",ecrit:"Non",actif:false}
   ],
   droits:{ecriture:false,reglement:false,exportCompta:false},
   test:null,configOk:false
@@ -98,6 +99,7 @@ function render(){
   });
   nav.innerHTML=h;
   main.innerHTML=VIEWS[state.step]();
+  document.getElementById("mode-badge").textContent=state.live?"Connecté à l armoire réelle gdn_solutions (test)":"Bac à sable · données fictives · démo";
   window.scrollTo(0,0);
 }
 function go(i){ if(i<=state.step){state.step=i;render();} }
@@ -109,35 +111,65 @@ function actions(){
 var VIEWS={};
 VIEWS[0]=function(){
   var a=state.armoire;
-  return "<h2>1. Armoire</h2><p class='sous'>Identifiez l'armoire client à mettre en service.</p>"
+  return "<h2>1. Armoire</h2><p class='sous'>Identifiez l armoire client à mettre en service.</p>"
   +'<div class="card"><div class="row"><div><label>Nom du client</label><input value="'+a.client+'" oninput="state.armoire.client=this.value"></div>'
   +'<div><label>Url_Client</label><input value="'+a.url+'" oninput="state.armoire.url=this.value"></div></div>'
   +'<div class="row"><div><label>N_Client</label><input value="'+a.nclient+'" oninput="state.armoire.nclient=this.value"></div>'
   +'<div><label>Plateforme</label><select onchange="state.armoire.plateforme=this.value"><option'+(a.plateforme==="France"?" selected":"")+'>France</option><option'+(a.plateforme==="Suisse"?" selected":"")+'>Suisse</option><option'+(a.plateforme==="Santé"?" selected":"")+'>Santé</option></select></div></div></div>'
-  +'<div class="msg-info">Dans cette démo, l\'armoire de test <b>gdn_solutions (coll_27)</b> est préremplie. Aucun appel réel n\'est effectué.</div>'
+  +'<div class="msg-info">Les identifiants de l armoire sont stockés côté serveur (variables d environnement Vercel), jamais dans le navigateur.</div>'
   +actions();
 };
 VIEWS[1]=function(){
-  return "<h2>2. Connexion</h2><p class='sous'>Identifiants OAuth 2.0 fournis par Zeendoc (jamais affichés après saisie).</p>"
+  var msg="";
+  if(state.connRun){ msg='<div class="msg-info"><span class="spinner"></span>Test de la connexion réelle en cours…</div>'; }
+  else if(state.connOk&&state.live){ msg='<div class="msg-ok">\u2713 Connexion réelle réussie : '+state.connMsg+"</div>"; }
+  else if(state.connOk){ msg='<div class="msg-info">Mode simulation activé : '+state.connMsg+"</div>"; }
+  return "<h2>2. Connexion</h2><p class='sous'>Test de la connexion OAuth 2.0 à l armoire (secrets gérés côté serveur).</p>"
   +'<div class="card">'
-  +'<label>client_id</label><input placeholder="ex. 3f8a..." oninput="state.conn.client_id=this.value">'
-  +'<label>client_secret</label><input type="password" placeholder="••••••••" oninput="state.conn.client_secret=this.value">'
-  +'<label>Compte d\'application</label><input placeholder="compte de service dédié" oninput="state.conn.compte=this.value">'
+  +'<div style="font-size:13.5px;line-height:1.7">Le proxy <code>/api/zeendoc</code> utilise les variables d\'environnement Vercel :<br>'
+  +"<code>ZEENDOC_TOKEN_URL</code>, <code>ZEENDOC_API_BASE</code>, <code>ZEENDOC_CLIENT_ID</code>,<br>"
+  +"<code>ZEENDOC_CLIENT_SECRET</code>, <code>ZEENDOC_N_CLIENT</code></div>"
   +'<div style="margin-top:16px"><button class="btn-p" onclick="testConn()">Tester la connexion</button></div>'
-  +(state.connOk?'<div class="msg-ok" style="margin-top:14px">\u2713 Connexion réussie sur zeendoc.com (simulation). Jeton d\'accès d\'1 heure obtenu.</div>':'<div class="warning">La démo accepte n\'importe quels identifiants (simulation).</div>')
+  +msg
+  +'<div class="warning">Si les variables ne sont pas encore configurées, la démo bascule automatiquement en simulation.</div>'
   +"</div>"
   +actions();
 };
-function testConn(){ state.connOk=true;render();next(); }
-VIEWS[2]=function(){
-  var h="<h2>3. Détection</h2><p class='sous'>Lecture automatique des classeurs via /context.</p>";
-  state.classeurs.forEach(function(c){
-    h+='<div class="card"><b>'+c.nom+'</b> <span class="pill p-gris">coll_'+c.id+"</span><table><tr><th>Index détecté</th></tr>"
-    +c.indexes.map(function(i){return "<tr><td>"+i.n+"</td></tr>";}).join("")+"</table></div>";
+function testConn(){
+  state.connRun=true;render();
+  fetch("/api/zeendoc?action=test").then(function(r){return r.json();}).then(function(j){
+    if(j.ok){ state.live=true; state.connMsg=j.message; }
+    else { state.live=false; state.connMsg=(j.message||"API indisponible")+" — bascule en simulation."; }
+  }).catch(function(){
+    state.live=false; state.connMsg="Proxy injoignable — bascule en simulation.";
+  }).then(function(){
+    state.connRun=false;state.connOk=true;render();next();
   });
-  h+='<div class="msg-info">4 classeurs et '+state.classeurs.reduce(function(n,c){return n+c.indexes.length;},0)+' index détectés (données fictives).</div>';
+}
+VIEWS[2]=function(){
+  var h="<h2>3. Détection</h2><p class='sous'>Lecture des classeurs via /context.</p>";
+  if(state.live){
+    h+='<div class="msg-ok">Mode connecté : cliquez pour lire le vrai /context de l armoire gdn_solutions.</div>'
+    +'<div class="card"><button class="btn-p" onclick="loadCtx()">Charger le /context réel</button></div>';
+    if(state.ctxRun){ h+='<div class="card"><span class="spinner"></span>Appel /context en cours…</div>'; }
+    if(state.ctxData){ h+='<div class="card"><pre>'+state.ctxData+"</pre></div>"; }
+  } else {
+    state.classeurs.forEach(function(c){
+      h+='<div class="card"><b>'+c.nom+'</b> <span class="pill p-gris">coll_'+c.id+"</span><table><tr><th>Index détecté</th></tr>"
+      +c.indexes.map(function(i){return "<tr><td>"+i.n+"</td></tr>";}).join("")+"</table></div>";
+    });
+    h+='<div class="msg-info">Mode simulation : 4 classeurs fictifs. Configurez le proxy pour lire la vraie armoire.</div>';
+  }
   return h+actions();
 };
+function loadCtx(){
+  state.ctxRun=true;render();
+  fetch("/api/zeendoc?action=context").then(function(r){return r.json();}).then(function(j){
+    state.ctxData=JSON.stringify(j,null,2);
+  }).catch(function(e){
+    state.ctxData="Erreur: "+e;
+  }).then(function(){ state.ctxRun=false;render(); });
+}
 VIEWS[3]=function(){
   var h="<h2>4. Mapping des index</h2><p class='sous'>L IA propose un rôle pour chaque index ; le technicien valide ou corrige.</p>";
   state.classeurs.forEach(function(c,ci){
@@ -166,19 +198,19 @@ VIEWS[5]=function(){
   +'<div class="check"><input type="checkbox" checked disabled> Lecture (recherche, consultation, /context) — toujours actif</div>'
   +'<div class="check"><input type="checkbox" '+(d.ecriture?"checked":"")+' onchange="state.droits.ecriture=this.checked"> Autoriser les écritures dans Zeendoc</div>'
   +'<div class="check"><input type="checkbox" '+(d.reglement?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.reglement=this.checked"> Écriture des règlements (PATCH indexes)</div>'
-  +'<div class="check"><input type="checkbox" '+(d.exportCompta?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.exportCompta=this.checked"> Statut d\'export comptable + listes de valeurs</div>'
+  +'<div class="check"><input type="checkbox" '+(d.exportCompta?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.exportCompta=this.checked"> Statut d export comptable + listes de valeurs</div>'
   +'<div class="warning">\u26A0 Toute écriture sera journalisée : qui, quand, document, valeur avant/après.</div></div>'
   +actions();
 };
 VIEWS[6]=function(){
   var h="<h2>7. Test à blanc</h2><p class='sous'>Exécution sur un mois passé, sans aucune écriture réelle.</p>";
-  if(state.test==="run"){ h+='<div class="card"><span class="spinner"></span>Exécution des usages actifs sur le mois d\'octobre 2026…</div>'; }
+  if(state.test==="run"){ h+='<div class="card"><span class="spinner"></span>Exécution des usages actifs sur le mois d octobre 2026…</div>'; }
   else if(state.test){
     h+=state.test.map(function(r){return '<div class="card"><b>'+r.nom+"</b><table><tr><th>Résultat</th><th>Valeur</th></tr>"
       +"<tr><td>Documents analysés</td><td>"+r.docs+"</td></tr><tr><td>"+r.label+"</td><td>"+r.val+"</td></tr></table></div>";}).join("");
-    h+='<div class="msg-ok">\u2713 Test à blanc terminé. Rien n\'a été écrit dans Zeendoc.</div>';
+    h+='<div class="msg-ok">\u2713 Test à blanc terminé. Rien n a été écrit dans Zeendoc.</div>';
   } else {
-    h+='<div class="card">Cliquez sur le bouton pour exécuter chaque usage actif à blanc sur un mois passé. <div class="warning">\u26A0 Résultats simulés (données fictives).</div><div style="margin-top:14px"><button class="btn-p" onclick="runTest()">Lancer le test</button></div></div>';
+    h+='<div class="card">Cliquez sur le bouton pour exécuter chaque usage actif à blanc sur un mois passé. <div class="warning">\u26A0 Résultats simulés dans ce bac à sable.</div><div style="margin-top:14px"><button class="btn-p" onclick="runTest()">Lancer le test</button></div></div>';
   }
   return h+actions();
 };
@@ -201,7 +233,7 @@ VIEWS[7]=function(){
   +'<div class="card"><b>Armoire :</b> '+state.armoire.client+" (N°"+state.armoire.nclient+", "+state.armoire.plateforme+")<br>"
   +"<b>Usages actifs :</b> "+state.usages.filter(function(u){return u.actif;}).map(function(u){return u.nom;}).join(", ")
   +"<br><b>Droits :</b> lecture seule"+(state.droits.ecriture?" + écritures activées":"")+"</div>"
-  +(state.configOk?'<div class="msg-ok">\u2713 Configuration générée. En production : création du kit d\'installation ou publication sur l\'hébergement.</div>':'<button class="btn-ok" onclick="genConfig()">Générer la configuration</button>')
+  +(state.configOk?'<div class="msg-ok">\u2713 Configuration générée. En production : création du kit d installation ou publication sur l hébergement.</div>':'<button class="btn-ok" onclick="genConfig()">Générer la configuration</button>')
   +(state.configOk?'<h3 style="margin:18px 0 8px;color:#0f3d6e">module-config.json (extrait)</h3><pre>'+JSON.stringify(cfg,null,2)+"</pre>":"");
   return h+'<div class="actions"><button class="btn-s" onclick="prev()">\u2190 Retour</button><button class="btn-p" onclick="finDemo()">Terminer la démo</button></div>';
 };
