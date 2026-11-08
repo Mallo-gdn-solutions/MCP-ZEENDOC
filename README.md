@@ -28,6 +28,17 @@ compte d'écriture `ZEENDOC_ECRITURE_LOGIN` / `ZEENDOC_ECRITURE_PASSWORD`.
 php tests/run-tests.php
 ```
 
+## Banc avant/après (critère de fin de l'étape 1)
+
+```sh
+php tests/banc-rapprochement.php run tests/fixtures/releve.exemple.csv 01/10/2026 31/10/2026 banc-resultats/avant.json --factures tests/fixtures/factures.exemple.json
+# ... refacto ...
+php tests/banc-rapprochement.php run tests/fixtures/releve.exemple.csv 01/10/2026 31/10/2026 banc-resultats/apres.json --factures tests/fixtures/factures.exemple.json
+php tests/banc-rapprochement.php comparer banc-resultats/avant.json banc-resultats/apres.json
+```
+
+Mode live (factures depuis l'armoire, variables `ZEENDOC_*`) : omettre `--factures`.
+
 ## Sécurité
 
 Secrets exclus du git (voir `.gitignore`). Toute écriture Zeendoc passe par le profil « ecriture »
