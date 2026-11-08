@@ -20,7 +20,7 @@ function ok(bool $condition, string $message): void
     }
 }
 
-ok(rb_norm('HÉLLO  Wörld! Éàü') === 'hello world eau', 'outils : rb_norm normalise casse, accents, ponctuation');
+ok(rb_norm('HÉLLO  Wörld! Éàü') === 'HELLO WORLD EAU', 'outils : rb_norm normalise en majuscules sans accents');
 ok(rb_date('31/01/2026') === '2026-01-31', 'outils : rb_date JJ/MM/AAAA');
 ok(rb_date('2026-10-05') === '2026-10-05', 'outils : rb_date AAAA-MM-JJ conservé');
 ok(rb_date('32/13/2026') === null && rb_date('') === null && rb_date(null) === null, 'outils : rb_date invalide -> null');

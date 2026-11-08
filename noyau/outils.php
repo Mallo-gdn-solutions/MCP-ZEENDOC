@@ -25,8 +25,8 @@ function rb_norm(string $s): string
             $s = $t;
         }
     }
-    $s = strtolower($s);
-    $s = preg_replace('/[^a-z0-9]+/', ' ', $s) ?? '';
+    $s = function_exists('mb_strtoupper') ? mb_strtoupper($s, 'UTF-8') : strtoupper($s);
+    $s = preg_replace('/[^A-Z0-9]+/', ' ', $s) ?? '';
     return trim(preg_replace('/\s+/', ' ', $s) ?? '');
 }
 
