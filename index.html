@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage GDN — Bac à sable</title>
+<style>
+  :root{--bleu:#0f3d6e;--bleu2:#1a5fa8;--vert:#1d9e5f;--rouge:#c0392b;--gris:#f4f6f9;--bord:#d8dee8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--gris);color:#1c2733}
+  header{background:var(--bleu);color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+  header h1{font-size:18px;font-weight:600}
+  header .badge{background:#ffffff22;padding:4px 10px;border-radius:12px;font-size:12px}
+  .layout{display:flex;min-height:calc(100vh - 52px)}
+  nav{width:230px;background:#fff;border-right:1px solid var(--bord);padding:18px 0}
+  .step{display:flex;align-items:center;gap:10px;padding:10px 16px;color:#7a8698;font-size:13.5px;cursor:pointer}
+  .step .num{width:24px;height:24px;border-radius:50%;background:#e3e8f0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+  .step.active{color:var(--bleu);font-weight:600}
+  .step.active .num{background:var(--bleu);color:#fff}
+  .step.done .num{background:var(--vert);color:#fff}
+  .step.done{color:var(--vert)}
+  main{flex:1;padding:28px 36px;max-width:860px}
+  h2{font-size:20px;color:var(--bleu);margin-bottom:6px}
+  .sous{color:#7a8698;font-size:13px;margin-bottom:22px}
+  .card{background:#fff;border:1px solid var(--bord);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+  label{display:block;font-size:12.5px;font-weight:600;color:#48586b;margin:12px 0 4px}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--bord);border-radius:7px;font-size:14px;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--bleu2);border-color:var(--bleu2)}
+  .row{display:flex;gap:14px}
+  .row>div{flex:1}
+  button{padding:10px 22px;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-p{background:var(--bleu);color:#fff}
+  .btn-p:hover{background:var(--bleu2)}
+  .btn-s{background:#e6ebf2;color:var(--bleu)}
+  .btn-ok{background:var(--vert);color:#fff}
+  .btn-danger{background:var(--rouge);color:#fff}
+  .actions{display:flex;justify-content:space-between;margin-top:26px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:9px 10px;border-bottom:1px solid var(--bord);text-align:left}
+  th{color:#48586b;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11.5px;font-weight:600}
+  .p-vert{background:#e2f6ec;color:var(--vert)}
+  .p-gris{background:#eef1f5;color:#7a8698}
+  .p-bleu{background:#e3edf8;color:var(--bleu)}
+  .msg-ok{background:#e2f6ec;color:#11633b;padding:10px 14px;border-radius:8px;font-size:13.5px;margin-bottom:14px}
+  .msg-info{background:#e3edf8;color:var(--bleu);padding:10px 14px;border-radius:8px;font-size:13.5px;margin-bottom:14px}
+  .check{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:14px}
+  .check input{width:auto}
+  .spinner{display:inline-block;width:16px;height:16px;border:3px solid #cdd8e6;border-top-color:var(--bleu);border-radius:50%;animation:spin 1s linear infinite;vertical-align:-3px;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  pre{background:#0f1720;color:#8fd3ff;padding:16px;border-radius:8px;font-size:12px;overflow:auto;max-height:320px}
+  .usage{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--bord)}
+  .usage:last-child{border-bottom:none}
+  .usage small{color:#7a8698;display:block;margin-top:2px}
+  .warning{color:var(--rouge);font-size:12.5px;margin-top:10px}
+  .nav-btns{display:flex;gap:8px;margin-top:8px;padding:0 16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Manage GDN — Assistant de mise en service</h1>
+  <span class="badge">Bac à sable · données fictives · démo</span>
+</header>
+<div class="layout">
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+<script>
+"use strict";
+// ====== Données fictives (simulation du retour /context Zeendoc) ======
+var STEPS=["Armoire","Connexion","Détection","Mapping","Usages","Droits","Test","Mise en service"];
+var state={
+  step:0,
+  armoire:{client:"GDN Solutions",url:"zeendoc.com",nclient:"27",plateforme:"France"},
+  conn:{client_id:"",client_secret:"",compte:""},connOk:false,
+  classeurs:[
+    {id:10,nom:"Factures fournisseurs",indexes:[{n:"Fournisseur",role:"tiers",ia:"tiers",ok:true},{n:"Date facture",role:"date",ia:"date",ok:true},{n:"N° facture",role:"reference",ia:"reference",ok:true},{n:"Montant TTC",role:"ttc",ia:"ttc",ok:true},{n:"Date échéance",role:"echeance",ia:"echeance",ok:true},{n:"IBAN",role:"iban",ia:"iban",ok:true},{n:"Statut",role:"statut",ia:"statut",ok:true}]},
+    {id:11,nom:"Factures clients",indexes:[{n:"Client",role:"tiers",ia:"tiers",ok:true},{n:"Date facture",role:"date",ia:"date",ok:true},{n:"Montant TTC",role:"ttc",ia:"ttc",ok:true},{n:"Date échéance",role:"echeance",ia:"echeance",ok:true}]},
+    {id:12,nom:"Notes de frais",indexes:[{n:"Salarié",role:"tiers",ia:"tiers",ok:true},{n:"Date",role:"date",ia:"date",ok:true},{n:"Montant TTC",role:"ttc",ia:"ttc",ok:true},{n:"Statut",role:"statut",ia:"",ok:false}]},
+    {id:13,nom:"Relevés bancaires",indexes:[{n:"Date opération",role:"date",ia:"date",ok:true},{n:"Libellé",role:"reference",ia:"reference",ok:true},{n:"Débit",role:"ttc",ia:"",ok:false},{n:"Crédit",role:"",ia:"ttc",ok:false}]}
+  ],
+  ROLES:["","tiers","date","reference","ttc","echeance","statut","iban"],
+  usages:[
+    {id:"rapprochement",nom:"Rapprochement bancaire",desc:"Pointe factures fournisseurs, clients et notes de frais avec le relevé",ecrit:"En option (règlement)",actif:true},
+    {id:"passerelle",nom:"Passerelle comptable",desc:"Exporte les factures validées vers le logiciel comptable",ecrit:"Oui",actif:false},
+    {id:"pieces",nom:"Pièces manquantes",desc:"Liste les débits sans facture, prépare la demande fournisseur",ecrit:"Non",actif:false},
+    {id:"echeancier",nom:"Échéancier",desc:"Factures échues et à venir à 30/60/90 jours",ecrit:"Non",actif:true},
+    {id:"sante",nom:"Bilan de santé de l'armoire",desc:"Index vides, doublons, validations bloquées",ecrit:"Non",actif:false},
+    {id:"relances",nom:"Relance des validations",desc:"Message au valideur d'une facture bloquée depuis X jours",ecrit:"Non",actif:false}
+  ],
+  droits:{ecriture:false,reglement:false,exportCompta:false},
+  test:null,configOk:false
+};
+// ====== Rendu ======
+var nav=document.getElementById("nav"),main=document.getElementById("main");
+function render(){
+  var h="";
+  STEPS.forEach(function(s,i){
+    var cls="step"+(i===state.step?" active":"")+(i<state.step?" done":"");
+    var num=i<state.step?"✓":(i+1);
+    h+='<div class="'+cls+'" onclick="go('+i+')"><span class="num">'+num+"</span>"+s+"</div>";
+  });
+  nav.innerHTML=h;
+  main.innerHTML=VIEWS[state.step]();
+  window.scrollTo(0,0);
+}
+function go(i){ if(i<=state.step){state.step=i;render();} }
+function next(){ state.step=Math.min(state.step+1,STEPS.length-1);render(); }
+function prev(){ state.step=Math.max(state.step-1,0);render(); }
+function actions(extra){
+  return '<div class="actions"><button class="btn-s" onclick="prev()">← Retour</button><span>'+(extra||"")+'<button class="btn-p" onclick="next()">Continuer →</button></span></div>';
+}
+var VIEWS={};
+// --- Étape 1 : Armoire
+VIEWS[0]=function(){
+  var a=state.armoire;
+  return "<h2>1. Armoire</h2><p class='sous'>Identifiez l'armoire client à mettre en service.</p>"
+  +'<div class="card"><div class="row"><div><label>Nom du client</label><input value="'+a.client+'" oninput="state.armoire.client=this.value"></div>'
+  +'<div><label>Url_Client</label><input value="'+a.url+'" oninput="state.armoire.url=this.value"></div></div>'
+  +'<div class="row"><div><label>N_Client</label><input value="'+a.nclient+'" oninput="state.armoire.nclient=this.value"></div>'
+  +'<div><label>Plateforme</label><select onchange="state.armoire.plateforme=this.value"><option'+(a.plateforme==="France"?" selected":"")+'>France</option><option'+(a.plateforme==="Suisse"?" selected":"")+'>Suisse</option><option'+(a.plateforme==="Santé"?" selected":"")+'>Santé</option></select></div></div></div>'
+  +'<div class="msg-info">Dans cette démo, l'armoire de test <b>gdn_solutions (coll_27)</b> est préremplie. Aucun appel réel n'est effectué.</div>'
+  +actions();
+};
+// --- Étape 2 : Connexion
+VIEWS[1]=function(){
+  return "<h2>2. Connexion</h2><p class='sous'>Identifiants OAuth 2.0 fournis par Zeendoc (jamais affichés après saisie).</p>"
+  +'<div class="card">'
+  +'<label>client_id</label><input placeholder="ex. 3f8a..." oninput="state.conn.client_id=this.value">'
+  +'<label>client_secret</label><input type="password" placeholder="••••••••" oninput="state.conn.client_secret=this.value">'
+  +'<label>Compte d'application</label><input placeholder="compte de service dédié" oninput="state.conn.compte=this.value">'
+  +'<div style="margin-top:16px"><button class="btn-p" onclick="testConn()">Tester la connexion</button></div>'
+  +(state.connOk?'<div class="msg-ok" style="margin-top:14px">✓ Connexion réussie sur zeendoc.com (simulation). Jeton d'accès d'1 heure obtenu.</div>':'<div class="warning">La démo accepte n'importe quels identifiants (simulation).</div>')
+  +"</div>"
+  +actions();
+};
+function testConn(){ state.connOk=true;render();next(); }
+// --- Étape 3 : Détection
+VIEWS[2]=function(){
+  var h="<h2>3. Détection</h2><p class='sous'>Lecture automatique des classeurs via <code>/context</code>.</p>";
+  state.classeurs.forEach(function(c){
+    h+='<div class="card"><b>'+c.nom+'</b> <span class="pill p-gris">coll_'+c.id+"</span><table><tr><th>Index détecté</th></tr>"
+    +c.indexes.map(function(i){return "<tr><td>"+i.n+"</td></tr>";}).join("")+"</table></div>";
+  });
+  h+='<div class="msg-info">4 classeurs et '+state.classeurs.reduce(function(n,c){return n+c.indexes.length;},0)+' index détectés (données fictives).</div>';
+  return h+actions();
+};
+// --- Étape 4 : Mapping
+VIEWS[3]=function(){
+  var h="<h2>4. Mapping des index</h2><p class='sous'>L'IA propose un rôle pour chaque index ; le technicien valide ou corrige. ⚠ = à confirmer.</p>";
+  state.classeurs.forEach(function(c,ci){
+    h+='<div class="card"><b>'+c.nom+"</b><table><tr><th>Index</th><th>Rôle proposé (IA)</th><th>Rôle retenu</th></tr>";
+    c.indexes.forEach(function(ix,ii){
+      var warn=(!ix.ok&&ix.role!==ix.ia)?" ⚠":"";
+      var opts=state.ROLES.map(function(r){return '<option value="'+r+'"'+(ix.role===r?" selected":"")+">"+(r||"— aucun —")+"</option>";}).join("");
+      h+="<tr><td>"+ix.n+warn+"</td><td>"+(ix.ia||"—")+"</td><td><select onchange='state.classeurs["+ci+"].indexes["+ii+"].role=this.value'>"+opts+"</select></td></tr>";
+    });
+    h+="</table></div>";
+  });
+  return h+actions();
+};
+// --- Étape 5 : Usages
+VIEWS[4]=function(){
+  var h="<h2>5. Usages</h2><p class='sous'>Activez les modules du catalogue et réglez-les usage par usage.</p><div class='card'>";
+  state.usages.forEach(function(u,ui){
+    h+='<div class="usage"><div><input type="checkbox" style="width:auto" '+(u.actif?"checked":"")+' onchange="state.usages['+ui+'].actif=this.checked"> <b>'+u.nom+"</b><small>"+u.desc+"</small><small>Écrit dans Zeendoc : "+u.ecrit+"</small></div>"
+    +'<span class="pill '+(u.actif?"p-vert":"p-gris")+'">'+(u.actif?"Actif":"Inactif")+"</span></div>";
+  });
+  return h+"</div>"+actions();
+};
+// --- Étape 6 : Droits
+VIEWS[5]=function(){
+  var d=state.droits;
+  return "<h2>6. Droits</h2><p class='sous'>Lecture seule par défaut. Chaque écriture s'active route par route.</p>"
+  +'<div class="card">'
+  +'<div class="check"><input type="checkbox" checked disabled> Lecture (recherche, consultation, /context) — toujours actif</div>'
+  +'<div class="check"><input type="checkbox" '+(d.ecriture?"checked":"")+' onchange="state.droits.ecriture=this.checked"> Autoriser les écritures dans Zeendoc</div>'
+  +'<div class="check"><input type="checkbox" '+(d.reglement?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.reglement=this.checked"> Écriture des règlements (PATCH indexes)</div>'
+  +'<div class="check"><input type="checkbox" '+(d.exportCompta?"checked":"")+' '+(d.ecriture?"":"disabled")+' onchange="state.droits.exportCompta=this.checked"> Statut d'export comptable + listes de valeurs</div>'
+  +'<div class="warning">⚠ Toute écriture sera journalisée : qui, quand, document, valeur avant/après.</div></div>'
+  +actions();
+};
+// --- Étape 7 : Test à blanc
+VIEWS[6]=function(){
+  var h="<h2>7. Test à blanc</h2><p class='sous'>Exécution sur un mois passé, sans aucune écriture réelle.</p>";
+  if(state.test==="run"){ h+='<div class="card"><span class="spinner"></span>Exécution des usages actifs sur le mois d'octobre 2026…</div>'; }
+  else if(state.test){
+    h+=state.test.map(function(r){return '<div class="card"><b>'+r.nom+"</b><table><tr><th>Résultat</th><th>Valeur</th></tr>"
+      +"<tr><td>Documents analysés</td><td>"+r.docs+"</td></tr><tr><td>"+r.label+"</td><td>"+r.val+"</td></tr></table></div>";}).join("");
+    h+='<div class="msg-ok">✓ Test à blanc terminé. Rien n'a été écrit dans Zeendoc.</div>';
+  } else {
+    h+='<div class="card">Cliquez sur « Lancer le test » pour exécuter chaque usage actif à blanc sur un mois passé. <div class="warning">⚠ Résultats simulés (données fictives).</div><div style="margin-top:14px"><button class="btn-p" onclick="runTest()">Lancer le test</button></div></div>';
+  }
+  return h+actions();
+};
+function runTest(){ state.test="run";render();setTimeout(function(){
+  var actifs=state.usages.filter(function(u){return u.actif;});
+  state.test=actifs.map(function(u,i){return {nom:u.nom,docs:120+i*35,label:u.id==="rapprochement"?"Rapprochements proposés":(u.id==="echeancier"?"Factures échues":"Éléments détectés"),val:u.id==="rapprochement"?"23 (dont 2 virements groupés à valider)":(u.id==="echeancier"?"11":"5")};});
+  render();
+},1400);
+}
+// --- Étape 8 : Mise en service
+VIEWS[7]=function(){
+  var cfg={
+    armoire:state.armoire,usages:state.usages.filter(function(u){return u.actif;}).map(function(u){return u.id;}),
+    droits:state.droits,mapping:state.classeurs.map(function(c){return {classeur:c.nom,indexes:c.indexes.filter(function(i){return i.role;}).map(function(i){return {index:i.n,role:i.role};});};})
+  };
+  var h="<h2>8. Mise en service</h2><p class='sous'>Vérifiez le récapitulatif, puis générez la configuration.</p>"
+  +'<div class="card"><b>Armoire :</b> '+state.armoire.client+" (N°"+state.armoire.nclient+", "+state.armoire.plateforme+")<br>"
+  +"<b>Usages actifs :</b> "+state.usages.filter(function(u){return u.actif;}).map(function(u){return u.nom;}).join(", ")
+  +"<br><b>Droits :</b> lecture seule"+(state.droits.ecriture?" + écritures activées":"")+"</div>"
+  +(state.configOk?'<div class="msg-ok">✓ Configuration générée. En production : création du kit d'installation ou publication sur l'hébergement.</div>':'<button class="btn-ok" onclick="genConfig()">Générer la configuration</button>')
+  +(state.configOk?'<h3 style="margin:18px 0 8px;color:var(--bleu)">module-config.json (extrait)</h3><pre>'+JSON.stringify(cfg,null,2)+"</pre>":"");
+  return h+'<div class="actions"><button class="btn-s" onclick="prev()">← Retour</button><button class="btn-p" onclick="alert('Démo terminée !\n\nProchaine étape réelle : brancher le noyau PHP sur l\'API Zeendoc et héberger sur un serveur français (OVH/Scaleway). Vercel ne sert ici qu\'à tester l\'interface.')">Terminer la démo</button></div>';
+};
+function genConfig(){ state.configOk=true;render(); }
+render();
+</script>
+</body>
+</html>
