@@ -1,0 +1,58 @@
+{
+  "zeendoc": {
+    "urlClient": "gdn_solutions",
+    "host": "https://zeendoc.test"
+  },
+  "lienDocument": "https://zeendoc.test/gdn_solutions/Ihm/View/docs_view.php?InDoc_Search=true&id={resId}&Coll_Id={collId}",
+  "classeurs": {
+    "fournisseurs": {
+      "collId": "coll_13",
+      "index": {
+        "tiers": "custom_t2",
+        "date": "custom_d4",
+        "ref": "custom_t3",
+        "ttc": "custom_f2",
+        "echeance": "custom_d1",
+        "mode": "custom_n2",
+        "statut": "custom_n7",
+        "type": "custom_n3",
+        "datePaiement": "custom_d2",
+        "refBancaire": "custom_t5"
+      },
+      "statutPayeId": 1,
+      "typesExclus": [13]
+    },
+    "clients": {
+      "collId": "coll_15",
+      "index": {
+        "tiers": "custom_t2",
+        "ttc": "custom_f2"
+      }
+    },
+    "notesDeFrais": {
+      "collId": "coll_14",
+      "index": {
+        "tiers": "custom_t2",
+        "ttc": "custom_f2"
+      },
+      "statutPayeId": 3
+    }
+  },
+  "banque": {
+    "nom": "Banque Populaire",
+    "fournisseursFraisBancaires": ["Banque Populaire"]
+  },
+  "exclureEcriture": ["Banque Populaire"],
+  "exclusionsSupplementaires": {
+    "debits": [],
+    "credits": ["/VIR POYET/i"]
+  },
+  "periodeDebutParDefaut": "01/01/2026",
+  "paiementsGroupes": {
+    "joursOuvres": 5,
+    "sources": []
+  },
+  "ecriture": {
+    "active": true
+  }
+}

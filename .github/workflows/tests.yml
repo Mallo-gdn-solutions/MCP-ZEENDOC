@@ -1,0 +1,25 @@
+name: Tests noyau
+
+on:
+  push:
+    branches: [vibe/noyau-generique-8f4375, main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Tests du noyau
+        run: php tests/run-tests.php
+      - name: Banc hors ligne (fixtures d'exemple)
+        run: |
+          php tests/banc-rapprochement.php run tests/fixtures/releve.exemple.csv 01/10/2026 31/10/2026 banc-resultats/exemple.json --factures tests/fixtures/factures.exemple.json

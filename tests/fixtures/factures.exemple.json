@@ -1,0 +1,28 @@
+[
+  {
+    "id": "1001",
+    "fournisseur": "EDF",
+    "date": "2026-10-05",
+    "ref": "FA-2026-1001",
+    "cents": 15499,
+    "echeance": "2026-10-20",
+    "mode": "Prélèvement",
+    "paye": false,
+    "statut": "En attente",
+    "dpActuelle": "",
+    "refActuelle": ""
+  },
+  {
+    "id": "1002",
+    "fournisseur": "Orange Business",
+    "date": "2026-10-12",
+    "ref": "FA-2026-1002",
+    "cents": 4990,
+    "echeance": "2026-10-27",
+    "mode": "Prélèvement",
+    "paye": false,
+    "statut": "En attente",
+    "dpActuelle": "",
+    "refActuelle": ""
+  }
+]
