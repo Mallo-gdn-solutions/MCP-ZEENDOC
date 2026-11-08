@@ -20,9 +20,9 @@ declare(strict_types=1);
 
 define('ZD_SANS_BOUCLE', true);
 
-require __DIR__ . '/../zeendoc-mcp.php';
-require __DIR__ . '/../lots.php';
-require __DIR__ . '/../remboursements.php';
+require_once __DIR__ . '/../zeendoc-mcp.php';
+require_once __DIR__ . '/../lots.php';
+require_once __DIR__ . '/../remboursements.php';
 
 function banc_usage(): void
 {
